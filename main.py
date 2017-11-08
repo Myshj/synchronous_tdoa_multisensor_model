@@ -30,6 +30,27 @@ if __name__ == '__main__':
         power=100
     )
 
+    sound_generator_2 = Generator(
+        time=time,
+        position=Position(3, 2, 0),
+        interval=139,
+        power=100
+    )
+
+    sound_generator_3 = Generator(
+        time=time,
+        position=Position(4, 5, 0),
+        interval=127,
+        power=100
+    )
+
+    sound_generator_4 = Generator(
+        time=time,
+        position=Position(2, 3, 0),
+        interval=128,
+        power=100
+    )
+
     sound_sensor_1 = Sensor(
         time=time,
         position=Position(0, 0, 0),
@@ -71,6 +92,9 @@ if __name__ == '__main__':
     environment.register_sound_sensor(sound_sensor_4)
     environment.register_sound_sensor(sound_sensor_5)
     environment.register_sound_source(sound_generator_1)
+    environment.register_sound_source(sound_generator_2)
+    environment.register_sound_source(sound_generator_3)
+    environment.register_sound_source(sound_generator_4)
 
     network_connection_1 = Connection(time, 10, set())
 
@@ -392,5 +416,7 @@ if __name__ == '__main__':
 
     for i in range(0, 1000000):
         time.to_next_tick()
+
+    print(len(tdoa_controller.reports))
 
     print(i)

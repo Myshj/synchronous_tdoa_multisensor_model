@@ -69,12 +69,16 @@ class Locator(object):
         self._transit_times_between_microphones_and_source / self._speed_of_sound
 
     def _initialize_differences_in_transit_times(self):
-        self._differences_in_transit_times = numpy.array([
-                                                             transit_time -
-                                                             self._transit_times_between_microphones_and_source[0] for
-                                                             transit_time in
-                                                             self._transit_times_between_microphones_and_source
-                                                             ])
+        l = [
+                transit_time - self._transit_times_between_microphones_and_source[0]
+                for transit_time in self._transit_times_between_microphones_and_source
+            ]
+        for i in range(0, len(l)):
+            if l[i] == 0:
+                l[i] = 0.0001
+        self._differences_in_transit_times = numpy.array(
+            l
+        )
 
     def _initialize_squared_microphone_positions(self):
         squared_microphone_positions = numpy.square(self._microphone_positions)
@@ -92,6 +96,8 @@ class Locator(object):
             self._column_a[i - 2] = self._calculate_element_for_column_a(i)
 
     def _calculate_element_for_column_a(self, i):
+        if self._differences_in_transit_times[i] == 0:
+            self._differences_in_transit_times[i] = 0.0001
         return self._inverted_speed_of_sound / self._differences_in_transit_times[i] * self._sums_for_abc[i, 0] - \
                self._inverted_speed_of_sound / self._differences_in_transit_times[1] * self._sums_for_abc[1, 0]
 

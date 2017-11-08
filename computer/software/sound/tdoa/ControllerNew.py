@@ -40,6 +40,7 @@ class Controller(LocatedObjectsReporter):
             speed_of_sound=self.speed_of_sound
         )
         self._reports = set()
+        self._reports_ttl = {}
         # if active_timer is not None:
         #     self._listen_to_active_timer()
 
@@ -66,6 +67,24 @@ class Controller(LocatedObjectsReporter):
     @property
     def active_timer(self) -> TickTimer:
         return self._active_timer
+
+    def on_tick(self) -> None:
+        super().on_tick()
+        self._clean_old_reports()
+
+    def _clean_old_reports(self):
+        reports_to_remove = {
+            r for r in filter(
+            lambda report: self._reports_ttl[report] == 0,
+            self.reports
+        )
+        }
+        self._reports.difference_update(reports_to_remove)
+        for report in reports_to_remove:
+            self._reports_ttl.pop(report)
+
+        for report in self._reports_ttl.keys():
+            self._reports_ttl[report] -= 1
 
     def _calculate_max_wait_time(self, max_distance_between_sensors: float):
         return int(max_distance_between_sensors * 1.25 / self.speed_of_sound)
@@ -97,7 +116,7 @@ class Controller(LocatedObjectsReporter):
         return self.sensor_controllers[address].last_report is not None
 
     def _locate(self):
-        groups = itertools.combinations(self.reports, 5)
+        groups = [c for c in itertools.combinations(self.reports, 5)]
         for group in groups:
             reports = list(group)
             sensors = [report.sensor for report in reports]
@@ -107,6 +126,10 @@ class Controller(LocatedObjectsReporter):
             # Прямой расчет позиции
             ticks = [
                 report.tick for report in reports
+            ]
+
+            levels = [
+                report.power for report in reports
             ]
             start_tick = min(ticks)
             times_of_arrival_related_to_first_heared_sensor = [tick - start_tick for tick in ticks]
@@ -118,22 +141,26 @@ class Controller(LocatedObjectsReporter):
                     transit_times=times_of_arrival_related_to_first_heared_sensor
                 )
             )
-            print(source_position)
 
-            # Проверка соответствия времени прибытия сигналов
-            # times_of_arrival_from_source_position = [
-            #     Position.distance(source_position, sensor.position) / self.speed_of_sound for sensor in sensors
-            # ]
-            # min_time = min(times_of_arrival_from_source_position)
-            # times_of_arrival_from_source_position = [
-            #     t - min_time for t in times_of_arrival_from_source_position
-            # ]
-            # diff = times_of_arrival_from_source_position - times_of_arrival_related_to_first_heared_sensor
+            possible_start_levels = [
 
-            raise ValueError('ЗДЕСЬ должен быть перебор всех возможных комбинаций рапортов')
+                pow(Position.distance(source_position, sensors[i].position), 2) * levels[i] for i in range(0, 5)
+            ]
+
+            # max_level = max(possible_start_levels)
+            # possible_start_levels = [
+            #     l / max_level for l in possible_start_levels.copy()
+            # ]
+
+            variance = statistics.pvariance(possible_start_levels)
+
+            if variance < 100:
+                self.reports.difference_update(reports)
+                print(source_position, variance)
 
     def _remember_last_report(self, report: SignalPerceivedReport):
         self.reports.add(report)
+        self._reports_ttl[report] = 1000
 
     def _listen_to_active_timer(self):
         self._active_timer.time_elapsed_broadcaster.register(self._on_activity_time_elapsed)
