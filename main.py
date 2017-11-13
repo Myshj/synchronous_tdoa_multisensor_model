@@ -40,7 +40,7 @@ if __name__ == '__main__':
     sound_generator_2 = Generator(
         time=time,
         position=Position(3, 2, 0),
-        interval=150,
+        interval=130,
         power=200
     )
     environment.register_sound_source(sound_generator_2)
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     sound_generator_3 = Generator(
         time=time,
         position=Position(4, 5, 0),
-        interval=127,
+        interval=140,
         power=100
     )
     environment.register_sound_source(sound_generator_3)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     sound_generator_4 = Generator(
         time=time,
         position=Position(2, 3, 0),
-        interval=128,
+        interval=120,
         power=120
     )
     environment.register_sound_source(sound_generator_4)
