@@ -15,6 +15,7 @@ class Generator(Physical):
     """
     С заданной периодичностью генерирует сферические звуковые волны.
     """
+    events = 0
 
     def __init__(
             self,
@@ -102,3 +103,4 @@ class Generator(Physical):
                 initial_power=self.power
             )
         )
+        Generator.events += 1

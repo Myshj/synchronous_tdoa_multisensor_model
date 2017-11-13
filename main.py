@@ -23,19 +23,27 @@ if __name__ == '__main__':
     f = F()
     # ss.perceived_something_broadcaster.register(f.f)
 
+    environment = PropagationEnvironment(
+        time=time,
+        speed_of_sound=0.34029,
+        min_sound_power=0.001
+    )
+
     sound_generator_1 = Generator(
         time=time,
         position=Position(7, 0, 0),
         interval=150,
         power=100
     )
+    environment.register_sound_source(sound_generator_1)
 
     sound_generator_2 = Generator(
         time=time,
         position=Position(3, 2, 0),
-        interval=139,
-        power=100
+        interval=150,
+        power=200
     )
+    environment.register_sound_source(sound_generator_2)
 
     sound_generator_3 = Generator(
         time=time,
@@ -43,13 +51,15 @@ if __name__ == '__main__':
         interval=127,
         power=100
     )
+    environment.register_sound_source(sound_generator_3)
 
     sound_generator_4 = Generator(
         time=time,
         position=Position(2, 3, 0),
         interval=128,
-        power=100
+        power=120
     )
+    environment.register_sound_source(sound_generator_4)
 
     sound_sensor_1 = Sensor(
         time=time,
@@ -81,20 +91,11 @@ if __name__ == '__main__':
         min_sound_power=0.01
     )
 
-    environment = PropagationEnvironment(
-        time=time,
-        speed_of_sound=0.34029,
-        min_sound_power=0.001
-    )
     environment.register_sound_sensor(sound_sensor_1)
     environment.register_sound_sensor(sound_sensor_2)
     environment.register_sound_sensor(sound_sensor_3)
     environment.register_sound_sensor(sound_sensor_4)
     environment.register_sound_sensor(sound_sensor_5)
-    environment.register_sound_source(sound_generator_1)
-    environment.register_sound_source(sound_generator_2)
-    environment.register_sound_source(sound_generator_3)
-    environment.register_sound_source(sound_generator_4)
 
     network_connection_1 = Connection(time, 10, set())
 
@@ -410,13 +411,14 @@ if __name__ == '__main__':
         max_deviation_in_space=1,
         filtrations=set()
     )
-    duplicates_filter.install(computer_server)
+    # duplicates_filter.install(computer_server)
 
     # protocol_2.port_broadcaster(0).register(f.f)
 
-    for i in range(0, 1000000):
+    for i in range(0, 2000):
         time.to_next_tick()
 
-    print(len(tdoa_controller.reports))
+    print('Система распознала событий: {0}'.format(Controller.recognized_events))
+    print('Всего событий: {0}'.format(Generator.events))
 
     print(i)

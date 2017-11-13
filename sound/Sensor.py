@@ -27,6 +27,7 @@ class Sensor(Physical):
             min_sound_power (float): Минимальная слышимая сила звука.
         """
         super(Sensor, self).__init__(time, position)
+        self._reset_last_perceived_power()
         self._min_sound_power = min_sound_power
         self._perceived_something_broadcaster = MulticastDelegate()
 
@@ -61,12 +62,26 @@ class Sensor(Physical):
         Returns:
             None: Description
         """
-        if power < self.min_sound_power:
+        if not self.can_hear(power):
             return
-        self._notify_about_perceived_signal(power)
 
-    def _notify_about_perceived_signal(self, power: float) -> None:
+        self._last_perceived_power = max(self._last_perceived_power, power)
+        # self._notify_about_perceived_signal(power)
+
+    def on_tick(self) -> None:
+        super().on_tick()
+        self._notify_about_perceived_signal()
+
+    def can_hear(self, power: float):
+        return power >= self.min_sound_power
+
+    def _notify_about_perceived_signal(self) -> None:
         """
         Уведомление о последнем услышанном сигнале.
         """
-        self.perceived_something_broadcaster.broadcast(power)
+        if self._last_perceived_power > 0:
+            self.perceived_something_broadcaster.broadcast(self._last_perceived_power)
+        self._reset_last_perceived_power()
+
+    def _reset_last_perceived_power(self):
+        self._last_perceived_power = 0
