@@ -10,6 +10,8 @@ from network.hardware import Connection, Adapter
 from network.software import Protocol
 from sound import Sensor, PropagationEnvironment
 from sound.wave import Generator
+import numpy as np
+
 
 
 class F:
@@ -28,38 +30,55 @@ if __name__ == '__main__':
         speed_of_sound=0.34029,
         min_sound_power=0.001
     )
+    np.random.seed(19680801)
+    generators = {
+        Generator(
+            time=time,
+            position=Position(
+                x=np.random.random() * 7,
+                y=np.random.random() * 7,
+                z=0
+            ),
+            interval=np.random.randint(100, 150),
+            power=np.random.randint(100, 200)
+        )
+        for i in range(0, 4)
+    }
 
-    sound_generator_1 = Generator(
-        time=time,
-        position=Position(7, 0, 0),
-        interval=150,
-        power=100
-    )
-    environment.register_sound_source(sound_generator_1)
+    for g in generators:
+        environment.register_sound_source(g)
 
-    sound_generator_2 = Generator(
-        time=time,
-        position=Position(3, 2, 0),
-        interval=130,
-        power=200
-    )
-    environment.register_sound_source(sound_generator_2)
-
-    sound_generator_3 = Generator(
-        time=time,
-        position=Position(4, 5, 0),
-        interval=140,
-        power=100
-    )
-    environment.register_sound_source(sound_generator_3)
-
-    sound_generator_4 = Generator(
-        time=time,
-        position=Position(2, 3, 0),
-        interval=120,
-        power=120
-    )
-    environment.register_sound_source(sound_generator_4)
+    # sound_generator_1 = Generator(
+    #     time=time,
+    #     position=Position(7, 0, 0),
+    #     interval=150,
+    #     power=100
+    # )
+    # environment.register_sound_source(sound_generator_1)
+    #
+    # sound_generator_2 = Generator(
+    #     time=time,
+    #     position=Position(3, 2, 0),
+    #     interval=130,
+    #     power=200
+    # )
+    # environment.register_sound_source(sound_generator_2)
+    #
+    # sound_generator_3 = Generator(
+    #     time=time,
+    #     position=Position(4, 5, 0),
+    #     interval=140,
+    #     power=100
+    # )
+    # environment.register_sound_source(sound_generator_3)
+    #
+    # sound_generator_4 = Generator(
+    #     time=time,
+    #     position=Position(2, 3, 0),
+    #     interval=120,
+    #     power=120
+    # )
+    # environment.register_sound_source(sound_generator_4)
 
     sound_sensor_1 = Sensor(
         time=time,
@@ -91,11 +110,10 @@ if __name__ == '__main__':
         min_sound_power=0.01
     )
 
-    environment.register_sound_sensor(sound_sensor_1)
-    environment.register_sound_sensor(sound_sensor_2)
-    environment.register_sound_sensor(sound_sensor_3)
-    environment.register_sound_sensor(sound_sensor_4)
-    environment.register_sound_sensor(sound_sensor_5)
+    sensors = {sound_sensor_1, sound_sensor_2, sound_sensor_3, sound_sensor_3, sound_sensor_4, sound_sensor_5}
+
+    for s in sensors:
+        environment.register_sound_sensor(s)
 
     network_connection_1 = Connection(time, 10, set())
 
@@ -422,3 +440,34 @@ if __name__ == '__main__':
     print('Всего событий: {0}'.format(Generator.events))
 
     print(i)
+
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    # Fixing random state for reproducibility
+
+    # matplotlib.rcParams['axes.unicode_minus'] = False
+    fig, ax = plt.subplots()
+    # ax.plot(10 * np.random.randn(100), 10 * np.random.randn(100), 'o')
+    ax.scatter(
+        x=[p['position'].x for p in Controller.source_positions],
+        y=[p['position'].y for p in Controller.source_positions],
+        label='Розраховані позиції джерел'
+    )
+    ax.scatter(
+        x=[p.position.x for p in generators],
+        y=[p.position.y for p in generators],
+        s=20,
+        c='r',
+        label='Істинні позиції джерел'
+    )
+    ax.scatter(
+        x=[s.position.x for s in sensors],
+        y=[s.position.y for s in sensors],
+        s=20,
+        c='g',
+        label='Позиції сенсорів'
+    )
+    ax.legend()
+    ax.set_title('Точність роботи системи')
+    plt.show()

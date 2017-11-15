@@ -16,6 +16,8 @@ from .SensorInfo import SensorInfo
 class Controller(LocatedObjectsReporter):
     recognized_events = 0
 
+    source_positions = []
+
     def __init__(
             self,
             time: Time,
@@ -139,13 +141,18 @@ class Controller(LocatedObjectsReporter):
             if variance < 1000 and all(r in self.reports for r in reports):
                 self._reports.difference_update(reports)
                 Controller.recognized_events += 1
+                Controller.source_positions.append(
+                    {
+                        'position': source_position
+                    }
+                )
                 print(source_position, variance)
             else:
                 self._bad_combinations.add(group)
 
     def _remember_last_report(self, report: SignalPerceivedReport):
         self.reports.add(report)
-        self._reports_ttl[report] = 1000
+        self._reports_ttl[report] = 200
 
     def _calculate_average_signal_power(self) -> float:
         return statistics.mean([info.last_report.power for info in self.sensor_controllers.values()])
