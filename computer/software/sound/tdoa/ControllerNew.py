@@ -1,20 +1,18 @@
 import itertools
 import statistics
-from typing import Dict, Optional, Set
+from typing import Dict, Set
 
 from Position import Position
-from TickTimer import TickTimer
 from Time import Time
 from computer.software.sound import SignalPerceivedReport
 from network import Address, Message as NetworkMessage
-from .ControllerState import ControllerState
 from .LocatedObjectsReporter import LocatedObjectsReporter
 from .Locator import Locator
 from .SensorInfo import SensorInfo
 
 
 class Controller(LocatedObjectsReporter):
-    recognized_events = 0
+    count_of_recognized_events = 0
 
     source_positions = []
 
@@ -24,11 +22,11 @@ class Controller(LocatedObjectsReporter):
             address: Address,
             addresses_to_send_reports: Set[Address],
             sensor_controllers: Dict[Address, SensorInfo],
-            state: ControllerState,
             speed_of_sound: float,
-            active_timer: Optional[TickTimer]
+            max_variance: float
     ) -> None:
         super().__init__(time, address, addresses_to_send_reports)
+        self._max_variance = max_variance
         if len(sensor_controllers) < 5:
             raise ValueError('too few sensors')
         self._sensor_controllers = sensor_controllers
@@ -138,9 +136,9 @@ class Controller(LocatedObjectsReporter):
 
             variance = statistics.pvariance(possible_start_levels)
 
-            if variance < 1000 and all(r in self.reports for r in reports):
+            if variance < self._max_variance and all(r in self.reports for r in reports):
                 self._reports.difference_update(reports)
-                Controller.recognized_events += 1
+                Controller.count_of_recognized_events += 1
                 Controller.source_positions.append(
                     {
                         'position': source_position

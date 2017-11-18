@@ -66,5 +66,4 @@ class TickTimer(TimeRelated):
         super().on_tick()
         if self.ticks_remaining == 0:
             self.time_elapsed_broadcaster.broadcast()
-        else:
-            self._ticks_remaining -= 1
+        self._ticks_remaining -= 1

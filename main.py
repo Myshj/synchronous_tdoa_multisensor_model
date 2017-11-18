@@ -1,22 +1,168 @@
+import matplotlib.pyplot as plt
+import numpy
+import numpy as np
+
 from Position import Position
 from Time import Time
 from computer.Computer import Computer
 from computer.hardware.sound import Microphone, States
 from computer.software.sound import SensorController
-from computer.software.sound.tdoa import Controller, ControllerState, SensorInfo
 from computer.software.sound.duplicates_filter import Filter
+from computer.software.sound.tdoa import Controller, SensorInfo
 from network import Address
 from network.hardware import Connection, Adapter
 from network.software import Protocol
 from sound import Sensor, PropagationEnvironment
 from sound.wave import Generator
-import numpy as np
-
 
 
 class F:
     def f(self, name):
         print(str(name))
+
+
+count_of_generators = 1
+max_space_error = 0.5
+max_variance = 5000
+
+speed = 10 / 5000
+
+move_first_generator = True
+
+
+def draw_fixed_case():
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+    fig.canvas.set_window_title('Усі реакції системи')
+    # ax.plot(10 * np.random.randn(100), 10 * np.random.randn(100), 'o')
+    ax1.scatter(
+        x=[p['position'].x for p in Controller.source_positions],
+        y=[p['position'].y for p in Controller.source_positions],
+        label='Розраховані позиції джерел'
+    )
+    ax1.scatter(
+        x=[p.position.x for p in generators],
+        y=[p.position.y for p in generators],
+        s=20,
+        c='r',
+        label='Істинні позиції джерел'
+    )
+    ax1.scatter(
+        x=[s.position.x for s in sensors],
+        y=[s.position.y for s in sensors],
+        s=20,
+        c='g',
+        label='Позиції сенсорів'
+    )
+    ax1.set_xlabel('Координата X')
+    ax1.set_ylabel('Координата Y')
+    ax1.legend()
+    ax1.set_title('Усі реакції системи')
+    # plt.show()
+    true_events = []
+    for recognized_event in Controller.source_positions:
+
+        for generator in generators:
+            x_error = (recognized_event['position'].x - generator.position.x)
+            y_error = (recognized_event['position'].y - generator.position.y)
+            if abs(x_error) < max_space_error and abs(y_error) < max_space_error:
+                true_events.append(recognized_event)
+                break
+    print('Правильно распознано событий: {0}'.format(len(true_events)))
+    # fig, ax1 = plt.subplots(1, 2)
+    # fig.canvas.set_window_title('Реакції з точністю до {0} одиниць довжини'.format(max_space_error))
+    # ax.plot(10 * np.random.randn(100), 10 * np.random.randn(100), 'o')
+    ax2.scatter(
+        x=[p['position'].x for p in true_events],
+        y=[p['position'].y for p in true_events],
+        label='Розраховані позиції джерел'
+    )
+    ax2.scatter(
+        x=[p.position.x for p in generators],
+        y=[p.position.y for p in generators],
+        s=20,
+        c='r',
+        label='Істинні позиції джерел'
+    )
+    ax2.scatter(
+        x=[s.position.x for s in sensors],
+        y=[s.position.y for s in sensors],
+        s=20,
+        c='g',
+        label='Позиції сенсорів'
+    )
+    ax2.legend()
+    ax2.set_title('Реакції системи з точністю до {0} одиниць довжини'.format(max_space_error))
+    ax2.set_xlabel('Координата X')
+    ax2.set_ylabel('Координата Y')
+    plt.show()
+
+
+def draw_moving_case():
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+    fig.canvas.set_window_title('Усі реакції системи')
+    # ax.plot(10 * np.random.randn(100), 10 * np.random.randn(100), 'o')
+    ax1.scatter(
+        x=[p['position'].x for p in Controller.source_positions],
+        y=[p['position'].y for p in Controller.source_positions],
+        label='Розраховані позиції джерела'
+    )
+    ax1.plot(
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        color='r',
+        linestyle='-',
+        label='Істинна траекторія'
+    )
+    ax1.scatter(
+        x=[s.position.x for s in sensors],
+        y=[s.position.y for s in sensors],
+        s=20,
+        c='g',
+        label='Позиції сенсорів'
+    )
+    ax1.set_xlabel('Координата X')
+    ax1.set_ylabel('Координата Y')
+    ax1.legend()
+    ax1.set_title('Усі реакції системи')
+    # plt.show()
+    true_events = []
+    for recognized_event in Controller.source_positions:
+
+        for generator in generators:
+            d = numpy.linalg.norm(
+                numpy.cross(
+                    [10, 10],
+                    [-recognized_event['position'].x, -recognized_event['position'].y]
+                )
+            ) / numpy.linalg.norm(
+                [10, 10]
+            )
+            if abs(d) < max_space_error:
+                true_events.append(recognized_event)
+                break
+    ax2.scatter(
+        x=[p['position'].x for p in true_events],
+        y=[p['position'].y for p in true_events],
+        label='Розраховані позиції джерел'
+    )
+    ax2.plot(
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        color='r',
+        linestyle='-',
+        label='Істинна траекторія'
+    )
+    ax2.scatter(
+        x=[s.position.x for s in sensors],
+        y=[s.position.y for s in sensors],
+        s=20,
+        c='g',
+        label='Позиції сенсорів'
+    )
+    ax2.set_xlabel('Координата X')
+    ax2.set_ylabel('Координата Y')
+    ax2.legend()
+    ax2.set_title('Реакції системи з точністю до {0} одиниць довжини'.format(max_space_error))
+    print('Правильно распознано событий: {0}'.format(len(true_events)))
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -31,7 +177,7 @@ if __name__ == '__main__':
         min_sound_power=0.001
     )
     np.random.seed(19680801)
-    generators = {
+    generators = [
         Generator(
             time=time,
             position=Position(
@@ -39,46 +185,15 @@ if __name__ == '__main__':
                 y=np.random.random() * 7,
                 z=0
             ),
-            interval=np.random.randint(100, 150),
-            power=np.random.randint(100, 200)
+            interval=np.random.randint(1, 10),
+            power=np.random.randint(100, 200),
+            count_of_events_to_generate=1500
         )
-        for i in range(0, 4)
-    }
+        for i in range(0, count_of_generators)
+    ]
 
     for g in generators:
         environment.register_sound_source(g)
-
-    # sound_generator_1 = Generator(
-    #     time=time,
-    #     position=Position(7, 0, 0),
-    #     interval=150,
-    #     power=100
-    # )
-    # environment.register_sound_source(sound_generator_1)
-    #
-    # sound_generator_2 = Generator(
-    #     time=time,
-    #     position=Position(3, 2, 0),
-    #     interval=130,
-    #     power=200
-    # )
-    # environment.register_sound_source(sound_generator_2)
-    #
-    # sound_generator_3 = Generator(
-    #     time=time,
-    #     position=Position(4, 5, 0),
-    #     interval=140,
-    #     power=100
-    # )
-    # environment.register_sound_source(sound_generator_3)
-    #
-    # sound_generator_4 = Generator(
-    #     time=time,
-    #     position=Position(2, 3, 0),
-    #     interval=120,
-    #     power=120
-    # )
-    # environment.register_sound_source(sound_generator_4)
 
     sound_sensor_1 = Sensor(
         time=time,
@@ -412,9 +527,8 @@ if __name__ == '__main__':
                 last_report=None
             ),
         },
-        state=ControllerState.waiting,
         speed_of_sound=environment.speed_of_sound,
-        active_timer=None
+        max_variance=max_variance
     )
     tdoa_controller.install(computer_server)
 
@@ -433,41 +547,20 @@ if __name__ == '__main__':
 
     # protocol_2.port_broadcaster(0).register(f.f)
 
-    for i in range(0, 2000):
+    if move_first_generator:
+        generators[0].position.x = 0
+        generators[0].position.y = 0
+
+    for i in range(0, 5000):
+        if move_first_generator:
+            generators[0].position.x += speed
+            generators[0].position.y += speed
         time.to_next_tick()
 
-    print('Система распознала событий: {0}'.format(Controller.recognized_events))
-    print('Всего событий: {0}'.format(Generator.events))
+    print('Система распознала событий: {0}'.format(Controller.count_of_recognized_events))
+    print('Всего событий: {0}'.format(len(Generator.events)))
 
-    print(i)
-
-    import matplotlib
-    import matplotlib.pyplot as plt
-
-    # Fixing random state for reproducibility
-
-    # matplotlib.rcParams['axes.unicode_minus'] = False
-    fig, ax = plt.subplots()
-    # ax.plot(10 * np.random.randn(100), 10 * np.random.randn(100), 'o')
-    ax.scatter(
-        x=[p['position'].x for p in Controller.source_positions],
-        y=[p['position'].y for p in Controller.source_positions],
-        label='Розраховані позиції джерел'
-    )
-    ax.scatter(
-        x=[p.position.x for p in generators],
-        y=[p.position.y for p in generators],
-        s=20,
-        c='r',
-        label='Істинні позиції джерел'
-    )
-    ax.scatter(
-        x=[s.position.x for s in sensors],
-        y=[s.position.y for s in sensors],
-        s=20,
-        c='g',
-        label='Позиції сенсорів'
-    )
-    ax.legend()
-    ax.set_title('Точність роботи системи')
-    plt.show()
+    if move_first_generator:
+        draw_moving_case()
+    else:
+        draw_fixed_case()

@@ -15,14 +15,15 @@ class Generator(Physical):
     """
     С заданной периодичностью генерирует сферические звуковые волны.
     """
-    events = 0
+    events = []
 
     def __init__(
             self,
             time: Time,
             position: Position,
             interval: int,
-            power: float
+            power: float,
+            count_of_events_to_generate: int
     ):
         """
         Конструктор.
@@ -35,9 +36,10 @@ class Generator(Physical):
         """
         super(Generator, self).__init__(time, position)
         self._interval = interval
-        self._prepare_to_wave_generation()
         self._power = power
+        self._count_of_events_to_generate = count_of_events_to_generate
         self._wave_generated_broadcaster = MulticastDelegate()
+        self._prepare_to_wave_generation()
 
     @property
     def interval(self) -> int:
@@ -83,8 +85,11 @@ class Generator(Physical):
         """
         Подготовка к генерации следующей волны.
         """
-        self._sound_generation_timer = TickTimer(self.time, self.interval)
-        self._sound_generation_timer.time_elapsed_broadcaster.register(self._it_is_time_to_generate_wave)
+        if self._count_of_events_to_generate > 0:
+            self._sound_generation_timer = TickTimer(self.time, self.interval)
+            self._sound_generation_timer.time_elapsed_broadcaster.register(self._it_is_time_to_generate_wave)
+        else:
+            print('{0} ended'.format(self))
         self._state = GeneratorStates.waiting
 
     def _it_is_time_to_generate_wave(self) -> None:
@@ -97,10 +102,12 @@ class Generator(Physical):
         """
         Генерирование новой звуковой волны и уведомление об этом.
         """
-        self._wave_generated_broadcaster.broadcast(
-            SphericalSoundWave(
+        w = SphericalSoundWave(
                 initial_position=self.position,
                 initial_power=self.power
             )
+        self._wave_generated_broadcaster.broadcast(
+            w
         )
-        Generator.events += 1
+        Generator.events.append(w)
+        self._count_of_events_to_generate -= 1
